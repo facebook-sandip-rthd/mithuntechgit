@@ -1,43 +1,75 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-        <modelVersion>1.0.0</modelVersion>
+Jenkins build is failing with
 
-        <groupId>com.mt</groupId>
-        <artifactId>maven-web-application</artifactId>
-        <packaging>war</packaging>
-        <version>1.0.0</version>
+Build step 'Invoke top-level Maven targets' marked build as failure
 
-        <name>maven-web-application</name>
+I am new to Jenkins and not sure why build is failing. Please see the log:
 
-        <description>Maven Web Project for Java Project</description>
+[INFO] yarn install v0.27.5
+[INFO] [1/4] Resolving packages...
+[INFO] [2/4] Fetching packages...
+[WARNING] warning fsevents@1.1.1: The platform "linux" is incompatible with this module.
+[INFO] info "fsevents@1.1.1" is an optional dependency and failed compatibility check. Excluding it from installation.
+[INFO] [3/4] Linking dependencies...
+[INFO] [4/4] Building fresh packages...
+Build step 'Invoke top-level Maven targets' marked build as failure
+Finished: FAILURE
+My pom.xml has below configurations:
 
-        <organization>
-                <name>Sandip Rathod</name>
-                <url>http://13.234.180.200:9000/</url>
-        </organization>
+<properties>
+        <project.frontend.nodeVersion>v6.10.0</project.frontend.nodeVersion>
+        <project.frontend.yarnVersion>v0.27.5</project.frontend.yarnVersion>
+        <skipGulp>false</skipGulp>
+        <build.args>publish:dev:all</build.args>
+    </properties>
 
-        <properties>
-                <jdk.version>1.8</jdk.version>
-                <spring.version>5.1.2.RELEASE</spring.version>
-                <junit.version>4.11</junit.version>
-                <log4j.version>1.2.17</log4j.version>
-                <sonar.host.url>http://13.234.180.200:9000/</sonar.host.url>
-                <sonar.login>sandiprthd</sonar.login>
-                <sonar.password>Notebook#330</sonar.password>
-                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        </properties>
-
-        <dependencies>
-
-                <dependency>
-                        <groupId>org.json</groupId>
-                        <artifactId>json</artifactId>
-                        <version>20160212</version>
-                </dependency>
-
-                <!-- test dependencies -->
-                <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.3</version>
+                <configuration>
+                    <skip>${skipGulp}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install node and yarn</id>
+                        <goals>
+                            <goal>install-node-and-yarn</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${project.frontend.nodeVersion}</nodeVersion>
+                            <yarnVersion>${project.frontend.yarnVersion}</yarnVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>yarn install</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+            <configuration>
+              <failOnError>false</failOnError>
+            </configuration>
+                    </execution>
+          <execution>
+            <id>fix node-sass package</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>rebuild node-sass</arguments>
+            </configuration>
+          </execution>
+                    <execution>
+                        <id>yarn</id>
+                        <goals>
+                            <goal>yarn</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run ${build.args}</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
